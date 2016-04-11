@@ -37,10 +37,39 @@
     <xacro:default_inertial mass="0.010"/>
   </link>
 
+
+  <!--**********************************************************************-->
+  <!-- Definition of the FEMUR part -->
+  <!--**********************************************************************-->
+  <xacro:macro name="femur" params="id">
+    <link name="femur_${id}">
+      <visual>
+	<origin xyz="0.075 0 -0.0146"/>
+	<geometry>
+	  <box size="0.052 0.032 0.032"/>
+	</geometry>
+	<material name="gray">
+	  <color rgba="0.4 0.4 0.4 1"/>
+	</material>
+      </visual>
+      <xacro:default_inertial mass="0.010"/>
+    </link>
+    <joint name="femur_${id}_joint" type="continuous">
+      <origin xyz="0.052 0 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <parent link="coxa_${id}"/>
+      <child link="femur_${id}"/>
+    </joint>
+  </xacro:macro>
+
+
+  <!--**********************************************************************-->
+  <!-- Definition of the COXA part -->
+  <!--**********************************************************************-->
   <xacro:macro name="coxa" params="id pos rot">
     <link name="coxa_${id}">
-      <origin xyz="0.026 0 0"/>
       <visual>
+	<origin xyz="0.026 0 0"/>
 	<geometry>
 	  <box size="0.052 0.048 0.025"/>
 	</geometry>
@@ -50,38 +79,20 @@
       </visual>
       <xacro:default_inertial mass="0.010"/>
     </link>
-    <joint name="coxa_${id}_joint" type="revolute">
-      <origin xyz="${pos}" rpy="0 0 ${rot}" />
+    <joint name="coxa_${id}_joint" type="continuous">
+      <origin xyz="${pos}" rpy="0 0 ${rot}"/>
+      <axis xyz="0 0 1"/>
       <parent link="base_link"/>
       <child link="coxa_${id}"/>
-      <limit effort="30" velocity="10" lower="${rot - 1.9}" upper="${rot + 1.9}"/>
     </joint>
+    <xacro:femur id="${id}"/>
   </xacro:macro>
 
   <xacro:coxa id="1" pos="0.122 0.061 -0.01375" rot="${3.14159/4}" />
   <xacro:coxa id="1R" pos="0.122 -0.061 -0.01375" rot="${-3.14159/4}" />
+  <xacro:coxa id="2" pos="0.0 0.1035 -0.01375" rot="${3.14159/2}" />
+  <xacro:coxa id="2R" pos="0.0 -0.1035 -0.01375" rot="${-3.14159/2}" />
+  <xacro:coxa id="3" pos="-0.122 0.061 -0.01375" rot="2.3562" />
+  <xacro:coxa id="3R" pos="-0.122 -0.061 -0.01375" rot="-2.3562" />
 
-
-  <!--**********************************************************************-->
-  <!-- Definition of the COXA part -->
-  <!--**********************************************************************-->
-  <xacro:macro name="wheel" params="number reflect">
-    <link name="coxa_${number}">
-      <visual>
-	<geometry>
-	  <cylinder radius="${wheeldiam/2}" length=".1"/>
-	</geometry>
-	<material name="black">
-	  <color rgba="0 0 0 1"/>
-	</material>
-      </visual>
-      <collision>
-	<geometry>
-	  <cylinder radius="${wheeldiam/2}" length=".1"/>
-	</geometry>
-      </collision>
-      <xacro:default_inertial mass="1"/>
-    </link>
-  </xacro:macro>
 </robot>
-
