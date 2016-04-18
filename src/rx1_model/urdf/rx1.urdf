@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<robot name="rx1">
+  <link name="frame">
+    <visual>
+      <geometry>
+	<box size="0.21 0.09 0.0685"/>
+	<box size="0.037 0.037 0.037"/>
+      </geometry>
+    </visual>
+  </link>
+</robot>
