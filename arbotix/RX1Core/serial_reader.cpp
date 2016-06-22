@@ -9,6 +9,7 @@ int state = 0;
 int counter = 0;
 int data_size = 0;
 int message_id = 0;
+int num_actuators = 0;
 
 // read buffer
 unsigned char data[1024];
@@ -30,17 +31,21 @@ int process(unsigned char ch){
         }
         break;
     case 2:
-        data_size = (int)ch;
-        counter = 0;
+        num_actuators = (int)ch;
         state = 3;
         break;
     case 3:
+        data_size = (int)ch;
+        counter = 0;
+        state = 4;
+        break;
+    case 4:
         data[counter] = ch;
         counter ++;
         if(counter >= data_size){
-          state = 4;
+          state = 5;
         }
         break;
-    case 4:
+    case 5:
   }
 }
