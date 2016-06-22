@@ -1,0 +1,13 @@
+## Message Definition for setting actuator targets (Message 01)
+
+Byte:     Contents:
+-----     ---------
+0:        Header 1 (0xFF)
+1:        Header / Message ID (0xF1)
+2:        Number of actuators (N)
+3:        Number of bytes of data
+4->4N+3:  Data
+          For each actuator:
+              2-byte Goal Position
+              2-byte Speed
+4N+4:     Checksum byte

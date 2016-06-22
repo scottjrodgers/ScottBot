@@ -1,0 +1,17 @@
+## Message Definition for Reporting Actuator Status (Message 02)
+
+Byte:     Contents:
+-----     ---------
+0:        Header 1 (0xFF)
+1:        Header / Message ID (0xF2)
+2:        Number of actuators (N)
+3:        Number of bytes of data
+4->9N+3:  Data
+          For each actuator:
+              2-byte Current Position
+              2-byte Current Speed
+              2-byte Load
+              1-byte Voltage
+              1-byte Temperature
+              1-byte (1 if motor is moving, 0 if not)
+9N+4:     Checksum byte
