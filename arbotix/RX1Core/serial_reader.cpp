@@ -3,6 +3,7 @@
 
   Note:  Non-thread-safe
 **********************************************************************/
+#include "serial_reader.h"
 
 // State Variables
 int state = 0;
@@ -12,10 +13,10 @@ int message_id = 0;
 int num_actuators = 0;
 
 // read buffer
-unsigned char data[1024];
+unsigned char serial_data[1024];
 
 // function to process one character
-int process(unsigned char ch){
+int process_char(unsigned char ch){
   switch(ch){
     case 0:
         if(ch == 0xFF){
@@ -40,12 +41,17 @@ int process(unsigned char ch){
         state = 4;
         break;
     case 4:
-        data[counter] = ch;
+        serial_data[counter] = ch;
         counter ++;
         if(counter >= data_size){
           state = 5;
         }
         break;
     case 5:
+      // check if checksum matches ch
+      // if so, call the appropriate function to process this completed
+      // message and its data
+      state = 0;
+      break;
   }
 }

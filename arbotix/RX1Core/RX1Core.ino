@@ -1,6 +1,7 @@
 #include <TimedAction.h>
 #include <ax12.h>
 #include "handlers.h"
+#include "serial_reader.h"
 
 unsigned char data[256];
 unsigned char ch;
@@ -47,25 +48,8 @@ void loop(){
   lidarThread.check();
 
   // Read in next command
-  ch = Serial.read();
-  while(ch != 0xFF || prev != 0xFF){
-    prev = ch;
-    ch = Serial.read();
+  if(Serial.available() > 0){
+    ch = (unsigned char)Serial.read();
+    process_char(ch);
   }
-  unsigned char message_id = Serial.read();
-  unsigned char data_size = Serial.read();
-  for(int i=0;i<data_size;i++){
-    data[i] = Serial.read();
-  }
-  unsigned char checksum = Serial.read();
-
-  // Dispatch to appropriate handler
-  // switch(message_id){
-  //   case 0x20:
-  //     query_all_positions();
-  //     break;
-  //   case 0x21:
-  //     query_all_speeds();
-  //     break;
-  // }
 }

@@ -47,8 +47,7 @@ void query_all_registers(){
 
   // output the mega message
   output_byte(0xff); // Header
-  output_byte(0xff); // Header 2
-  output_byte(0xB1); // Message ID
+  output_byte(0xf2); // Header + Message 2
   output_byte(SERVO_CNT);  // Servo count
   output_byte(SERVO_CNT * 9); // data size
 
