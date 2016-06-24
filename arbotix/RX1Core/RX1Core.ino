@@ -1,7 +1,7 @@
 #include <TimedAction.h>
 #include <ax12.h>
 #include "handlers.h"
-#include "serial_reader.h"
+#include "serial_io.h"
 
 unsigned char data[256];
 unsigned char ch;
@@ -28,7 +28,7 @@ void setup(){
   // TODO: set up I2C for LIDAR
 
   // setup serial
-  Serial.begin(115200);  // 115200
+  Serial.begin(57600);  // 115200
 
 
   // Initialize the interface to AX12a Servos
@@ -42,15 +42,15 @@ void setup(){
 
   for(int i=1;i<=18;i++){
     ax12SetRegister(i, AX_TORQUE_ENABLE, 1);
-    delay(100);
+    delay(10);
     ax12SetRegister(i, AX_LED, 1);
-    delay(100);
+    delay(10);
     ax12SetRegister2(i, AX_GOAL_SPEED_L, 512);
-    delay(100);
+    delay(10);
     ax12SetRegister2(i, AX_TORQUE_LIMIT_L, 512);
-    delay(100);
+    delay(10);
     ax12SetRegister2(i, AX_GOAL_POSITION_L, 512);
-    delay(100);
+    delay(10);
   }
 }
 
@@ -58,7 +58,10 @@ void setup(){
 void loop(){
   // check on threads
   statusThread.check();
-  lidarThread.check();
+  //lidarThread.check();
+
+  // Transmit from queue as needed
+  transmit_queue();
 
   // Read in next command
   if(Serial.available() > 0){

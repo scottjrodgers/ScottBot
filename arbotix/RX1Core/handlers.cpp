@@ -1,5 +1,6 @@
 #include <ax12.h>
 #include "handlers.h"
+#include "serial_io.h"
 
 // Global checksum counter
 unsigned int checksum_counter = 0;
@@ -9,15 +10,6 @@ void reset_checksum();
 void output_byte(int ch);
 void output_checksum();
 
-// void read_register_short_all(int addr_L,
-//                              unsigned char *lowbyte,
-//                              unsigned char *highbyte);
-// void read_register_byte_all(int addr_L, unsigned char *lowbyte);
-// void write_message_shorts(unsigned char message_id,
-//                            unsigned char *lowbyte,
-//                            unsigned char *highbyte);
-// void write_message_bytes(unsigned char message_id, unsigned char *lowbyte);
-
 /*************************************************************************
 *************************************************************************/
 void init_interface(){
@@ -25,21 +17,68 @@ void init_interface(){
   ax12Init(1000000);
 }
 
+/* write pose out to servos using sync write. */
+// void BioloidController::writePose(){
+//     int temp;
+//     int length = 4 + (poseSize * 3);   // 3 = id + pos(2byte)
+//     int checksum = 254 + length + AX_SYNC_WRITE + 2 + AX_GOAL_POSITION_L;
+//     setTXall();
+//     ax12write(0xFF);
+//     ax12write(0xFF);
+//     ax12write(0xFE);
+//     ax12write(length);
+//     ax12write(AX_SYNC_WRITE);
+//     ax12write(AX_GOAL_POSITION_L);
+//     ax12write(2);
+//     for(int i=0; i<poseSize; i++)
+//     {
+//         temp = pose_[i] >> BIOLOID_SHIFT;
+//         checksum += (temp&0xff) + (temp>>8) + id_[i];
+//         ax12write(id_[i]);
+//         ax12write(temp&0xff);
+//         ax12write(temp>>8);
+//     }
+//     ax12write(0xff - (checksum % 256));
+//     setRX(0);
+// }
+
 /*************************************************************************
 Update target positions and velocities
 *************************************************************************/
 void update_targets(unsigned char *data, int num_actuators, int data_size){
-  int p = 0;
-  for(int i = 0; i < num_actuators; i++){
-    int value = data[p] << 8 + data[p+1];
-    p += 2;
-    ax12SetRegister2(i+1, AX_GOAL_POSITION_L, value);
-    value = data[p] << 8 + data[p+1];
-    p += 2;
-    ax12SetRegister2(i+1, AX_GOAL_SPEED_L, value);
+  if(data_size == num_actuators * 4){
+    int pos_value;
+    int sped_value;
+    int length = 4 + (poseSize * 5);   // 5 = id + pos(2byte) + speed(2byte)
+    int checksum = 254 + length + AX_SYNC_WRITE + 2 + AX_GOAL_POSITION_L;
+    int p = 0;
+    setTXall();
+    ax12write(0xFF);
+    ax12write(0xFF);
+    ax12write(0xFE);
+    ax12write(length);
+    ax12write(AX_SYNC_WRITE);
+    ax12write(AX_GOAL_POSITION_L);
+    ax12write(4); // 2 for position + 2 for speed
+    for(int i=0; i < poseSize; i++)
+    {
+      pos_value = data[p] << 8 + data[p+1];
+      p += 2;
+      speed_value = data[p] << 8 + data[p+1];
+      p += 2;
+      ax12write(id_[i]);
+      checksum += (i+1); // ids are 1 - N
+      ax12write(pos_value & 0xff);
+      ax12write(pos_value >> 8);
+      checksum += (pos_value & 0xff) + (pos_value >> 8) + id_[i];
+      ax12write(speed_value & 0xff);
+      ax12write(speed_value >> 8);
+      checksum += (speed_value & 0xff) + (speed_value >> 8) + id_[i];
+    }
+    ax12write(0xff - (checksum % 256));
+    setRX(0);
   }
 }
-
 
 /*************************************************************************
 Query All Registers
@@ -51,6 +90,7 @@ void query_all_registers(){
   unsigned char voltage[SERVO_CNT];
   unsigned char temp[SERVO_CNT];
   unsigned char moving[SERVO_CNT];
+
 
   for(int i=0; i<SERVO_CNT; i++){
     position[i] = (unsigned short)ax12GetRegister(i+1, AX_PRESENT_POSITION_L, 2);
@@ -85,82 +125,6 @@ void query_all_registers(){
 /*************************************************************************
 Query All Current Positions
 *************************************************************************/
-// int query_all_positions(){
-//   unsigned char lowbyte[SERVO_CNT];
-//   unsigned char highbyte[SERVO_CNT];
-//
-//   read_register_short_all(AX_PRESENT_POSITION_L, lowbyte, highbyte);
-//   write_message_shorts(0xA0, lowbyte, highbyte);
-//   return 0;
-// }
-
-/*************************************************************************
-Query All Current Speeds
-*************************************************************************/
-// int query_all_speeds(){
-//   unsigned char lowbyte[SERVO_CNT];
-//   unsigned char highbyte[SERVO_CNT];
-//
-//   read_register_short_all(AX_PRESENT_SPEED_L, lowbyte, highbyte);
-//   write_message_shorts(0xA1, lowbyte, highbyte);
-//   return 0;
-// }
-
-/*************************************************************************
-*************************************************************************/
-// void write_message_shorts(unsigned char message_id,
-//                            unsigned char *lowbyte,
-//                            unsigned char *highbyte){
-//   // Write return message
-//   reset_checksum();
-//   output_byte(0xff);
-//   output_byte(0xff);
-//   output_byte((int)message_id);
-//   output_byte(2 * SERVO_CNT);
-//
-//   for(int i=0;i<SERVO_CNT;i++){
-//     output_byte((int)highbyte[i]);
-//     output_byte((int)lowbyte[i]);
-//   }
-//   output_checksum();
-// }
-
-/*************************************************************************
-*************************************************************************/
-// void write_message_bytes(unsigned char message_id,
-//                          unsigned char *lowbyte){
-//   // Write return message
-//   reset_checksum();
-//   output_byte(0xff);
-//   output_byte(0xff);
-//   output_byte((int)message_id);
-//   output_byte(SERVO_CNT);
-//
-//   for(int i=0;i<SERVO_CNT;i++){
-//     output_byte((int)lowbyte[i]);
-//   }
-//   output_checksum();
-// }
-
-/*************************************************************************
-*************************************************************************/
-// void read_register_short_all(int addr_L,
-//                              unsigned char *lowbyte,
-//                              unsigned char *highbyte){
-//   for(int i=0;i<SERVO_CNT;i++){
-//     lowbyte[i] = ax12GetRegister(i+1, addr_L, 1);
-//     highbyte[i] = ax12GetRegister(i+1, addr_L + 1, 1);
-//   }
-// }
-
-/*************************************************************************
-*************************************************************************/
-// void read_register_byte_all(int addr_L,
-//                             unsigned char *lowbyte){
-//   for(int i=0;i<SERVO_CNT;i++){
-//     lowbyte[i] = ax12GetRegister(i+1, addr_L, 1);
-//   }
-// }
 
 /*************************************************************************
 *************************************************************************/
@@ -172,12 +136,12 @@ void reset_checksum(){
 *************************************************************************/
 void output_byte(int ch){
   checksum_counter += (unsigned char)ch;
-  Serial.write(ch);
+  enqueue_byte(ch);
 }
 
 /*************************************************************************
 *************************************************************************/
 void output_checksum(){
-  unsigned char diff = 256 - checksum_counter & 0xFF;
-  Serial.write(diff);
+  enqueue_byte(checksum_counter & 0xFF);
+  checksum_counter = 0;
 }
