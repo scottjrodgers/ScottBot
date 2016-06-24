@@ -4,6 +4,7 @@
   Note:  Non-thread-safe
 **********************************************************************/
 #include "serial_reader.h"
+#include "handlers.h"
 
 // State Variables
 int state = 0;
@@ -51,6 +52,9 @@ int process_char(unsigned char ch){
       // check if checksum matches ch
       // if so, call the appropriate function to process this completed
       // message and its data
+      if(true && message_id == 1){
+        update_targets(serial_data, num_actuators, data_size);
+      }
       state = 0;
       break;
   }

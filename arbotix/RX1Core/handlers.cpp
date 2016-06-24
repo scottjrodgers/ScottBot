@@ -26,6 +26,22 @@ void init_interface(){
 }
 
 /*************************************************************************
+Update target positions and velocities
+*************************************************************************/
+void update_targets(unsigned char *data, int num_actuators, int data_size){
+  int p = 0;
+  for(int i = 0; i < num_actuators; i++){
+    int value = data[p] << 8 + data[p+1];
+    p += 2;
+    ax12SetRegister2(i+1, AX_GOAL_POSITION_L, value);
+    value = data[p] << 8 + data[p+1];
+    p += 2;
+    ax12SetRegister2(i+1, AX_GOAL_SPEED_L, value);
+  }
+}
+
+
+/*************************************************************************
 Query All Registers
 *************************************************************************/
 void query_all_registers(){

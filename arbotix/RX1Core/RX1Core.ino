@@ -28,7 +28,7 @@ void setup(){
   // TODO: set up I2C for LIDAR
 
   // setup serial
-  Serial.begin(115200);
+  Serial.begin(115200);  // 115200
 
 
   // Initialize the interface to AX12a Servos
@@ -39,6 +39,19 @@ void setup(){
   float voltage = (ax12GetRegister (1, AX_PRESENT_VOLTAGE, 1)) / 10.0;
   if (voltage < 10.0)
     while(1);
+
+  for(int i=1;i<=18;i++){
+    ax12SetRegister(i, AX_TORQUE_ENABLE, 1);
+    delay(100);
+    ax12SetRegister(i, AX_LED, 1);
+    delay(100);
+    ax12SetRegister2(i, AX_GOAL_SPEED_L, 512);
+    delay(100);
+    ax12SetRegister2(i, AX_TORQUE_LIMIT_L, 512);
+    delay(100);
+    ax12SetRegister2(i, AX_GOAL_POSITION_L, 512);
+    delay(100);
+  }
 }
 
 // The main loop for the ArbotiX-M Robocontroller
