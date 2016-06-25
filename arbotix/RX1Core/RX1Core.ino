@@ -1,5 +1,6 @@
 #include <TimedAction.h>
 #include <ax12.h>
+#include "robot.h"
 #include "handlers.h"
 #include "serial_io.h"
 
@@ -45,7 +46,7 @@ void setup(){
     delay(10);
     ax12SetRegister(i, AX_LED, 1);
     delay(10);
-    ax12SetRegister2(i, AX_GOAL_SPEED_L, 512);
+    ax12SetRegister2(i, AX_GOAL_SPEED_L, 300);
     delay(10);
     ax12SetRegister2(i, AX_TORQUE_LIMIT_L, 512);
     delay(10);

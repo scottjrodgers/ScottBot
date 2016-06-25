@@ -1,4 +1,5 @@
 #include <ax12.h>
+#include "robot.h"
 #include "handlers.h"
 #include "serial_io.h"
 
@@ -48,8 +49,8 @@ Update target positions and velocities
 void update_targets(unsigned char *data, int num_actuators, int data_size){
   if(data_size == num_actuators * 4){
     int pos_value;
-    int sped_value;
-    int length = 4 + (poseSize * 5);   // 5 = id + pos(2byte) + speed(2byte)
+    int speed_value;
+    int length = 4 + (NUM_ACTUATORS * 5);   // 5 = id + pos(2byte) + speed(2byte)
     int checksum = 254 + length + AX_SYNC_WRITE + 2 + AX_GOAL_POSITION_L;
     int p = 0;
     setTXall();
@@ -60,20 +61,20 @@ void update_targets(unsigned char *data, int num_actuators, int data_size){
     ax12write(AX_SYNC_WRITE);
     ax12write(AX_GOAL_POSITION_L);
     ax12write(4); // 2 for position + 2 for speed
-    for(int i=0; i < poseSize; i++)
+    for(int i=0; i < NUM_ACTUATORS; i++)
     {
       pos_value = data[p] << 8 + data[p+1];
       p += 2;
       speed_value = data[p] << 8 + data[p+1];
       p += 2;
-      ax12write(id_[i]);
+      ax12write(i+1);
       checksum += (i+1); // ids are 1 - N
       ax12write(pos_value & 0xff);
       ax12write(pos_value >> 8);
-      checksum += (pos_value & 0xff) + (pos_value >> 8) + id_[i];
+      checksum += (pos_value & 0xff) + (pos_value >> 8);
       ax12write(speed_value & 0xff);
       ax12write(speed_value >> 8);
-      checksum += (speed_value & 0xff) + (speed_value >> 8) + id_[i];
+      checksum += (speed_value & 0xff) + (speed_value >> 8);
     }
     ax12write(0xff - (checksum % 256));
     setRX(0);
