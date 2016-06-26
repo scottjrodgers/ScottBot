@@ -1,3 +1,6 @@
+#ifndef DATASTRUCTS
+#define DATASTRUCTS
+
 // Core data structures for RX1 API
 #include "robot.h"
 #include "fixedmath.h"
@@ -28,3 +31,5 @@ typedef struct{
   k_vector_t legs[NUM_LEGS];
   char fixed[NUM_LEGS];
 } kinematic_state_t;
+
+#endif

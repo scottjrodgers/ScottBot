@@ -1,7 +1,9 @@
 ## smart serial monitor
 
 import serial
-from datetime import datetime, timedelta
+from OutputCache import OutputCache
+import time
+#from datetime import datetime, timedelta
 
 ## Global Data
 actuator_count = 18
@@ -11,11 +13,11 @@ load = [0 for i in xrange(actuator_count + 1)]
 voltage = [0 for i in xrange(actuator_count + 1)]
 temperature = [0 for i in xrange(actuator_count + 1)]
 moving = [0 for i in xrange(actuator_count + 1)]
-ser = serial.Serial("/dev/ttyUSB0", 115200) # 115200
+ser = serial.Serial("/dev/ttyUSB0", 38400, timeout = 0) # 115200
 
 ## Target positions and velocities
-goal_position = [0 for i in xrange(actuator_count + 1)]
-goal_velocity = [0 for i in xrange(actuator_count + 1)]
+goal_position = [384 for i in xrange(actuator_count + 1)]
+goal_velocity = [200 for i in xrange(actuator_count + 1)]
 
 ## Global State Machine Data
 state = 0
@@ -24,6 +26,7 @@ data_size = 0
 message_id = 0
 num_actuators = 0
 serial_data = [0] * 1024
+checksum = 0
 
 
 #============================================================================
@@ -31,37 +34,39 @@ serial_data = [0] * 1024
 #============================================================================
 def decode_status(data, num, ndata):
     global position, speed, load, voltage, temperature, moving
-    assert ndata == 9 * num
-    n = 0
-    for i in xrange(num):
+    if ndata == 9 * num:
+        n = 0
+        for i in xrange(num):
 
-        position[i] = data[n] * 256 + data[n+1]
-        n += 2
+            position[i] = data[n] * 256 + data[n+1]
+            n += 2
 
-        speed[i] = data[n] * 256 + data[n + 1]
-        if speed[i] > 1024:
-            speed[i] = 1024 - speed[i]
-        n += 2
+            speed[i] = data[n] * 256 + data[n + 1]
+            if speed[i] > 1024:
+                speed[i] = 1024 - speed[i]
+            n += 2
 
-        load[i] = data[n] * 256 + data[n + 1]
-        if load[i] > 1024:
-            load[i] = 1024 - load[i]
-        n += 2
+            load[i] = data[n] * 256 + data[n + 1]
+            if load[i] > 1024:
+                load[i] = 1024 - load[i]
+            n += 2
 
-        voltage[i] = data[n] / 10.0
-        n += 1
+            voltage[i] = data[n] / 10.0
+            n += 1
 
-        temperature[i] = data[n]
-        n += 1
+            temperature[i] = data[n]
+            n += 1
 
-        moving[i] = data[n]
-        n += 1
+            moving[i] = data[n]
+            n += 1
 
-    mesg = ""
-    for i in xrange(num):
-        value = position[i]
-        mesg = mesg + "%4d" % value + " "
-    print mesg
+        mesg = ""
+        for i in xrange(num):
+            value = position[i]
+            mesg = mesg + "%4d" % value + " "
+        #print mesg
+    else:
+        print "less data than expected..."
 
 
 #============================================================================
@@ -69,40 +74,57 @@ def decode_status(data, num, ndata):
 #   message is complete, call the handler function
 #============================================================================
 def process_byte(ch):
-    #print format(ch, '#04x')
-
-    global state, counter, data_size, message_id, num_actuators, serial_data
+    global state, counter, data_size, message_id, num_actuators, serial_data, checksum
     if state == 0:
         if ch == 0xFF:
+            checksum = ch
             state = 1
     elif state == 1:
         if ch & 0xF0 == 0xF0:
+            checksum += ch
             state = 2
             message_id = ch & 0x0F
         else:
             state = 0
     elif state == 2:
         num_actuators = ch
+        checksum += ch
         state = 3
     elif state == 3:
         data_size = ch
+        checksum += ch
         counter = 0
         state = 4
     elif state == 4:
         serial_data[counter] = ch
+        checksum += ch
         counter += 1
         if counter >= data_size:
             state = 5;
     elif state == 5:
+
+        # DEBUG
+        mesg = ""
+        for i in xrange(data_size):
+            value = serial_data[i]
+            if i%27 == 0:
+                mesg += "\n"
+            if i%9 == 0:
+                mesg += " "
+            mesg = mesg + format(value, "02X") + " "
+        print mesg
+
+
         # check if checksum matches ch
         # if so, call the appropriate function to process this completed
         # message and its data
-
-        # TODO: Compute and check the checksum
-
-        if 1 and message_id == 2:
-            decode_status(serial_data, num_actuators, data_size)
+        if (checksum & 0xFF) == ch:
+            if message_id == 2:
+                decode_status(serial_data, num_actuators, data_size)
+        else:
+            print checksum & 0xFF, "vs", ch
         state = 0;
+        checksum = 0;
 
 
 #============================================================================
@@ -120,7 +142,8 @@ def transmit_targets():
         mesg.append(value // 256)
         mesg.append(value & 0xFF)
 
-    mesg.append(0) # no checksum at this time
+    check = sum(mesg) & 0xFF
+    mesg.append(check) # no checksum at this time
     ser.write(bytearray(mesg))
 
 
@@ -134,10 +157,12 @@ def millis(prev, now):
 
 ## One time Startup
 print "Initializing..."
-while ser.in_waiting > 0:
-    ser.read();
+ser.flushInput()
+ser.flushOutput()
 
-print "Cache Cleared..."
+print "Buffers Cleared..."
+
+hexcache = OutputCache()
 
 ##============================================
 ## Main Loop
@@ -145,17 +170,20 @@ print "Cache Cleared..."
 prev_time = None
 while 1:
     ## Handle incoming serial communications
-    if ser.in_waiting > 0:
-        ch = ord(ser.read())
+    input_byte = ser.read(1)
+    if len(input_byte) > 0:
+        ch = ord(input_byte)
+        # print format(ch, '#04x')
+        #hexcache.add(ch)
         process_byte(ch)
 
     ## periodically update the target positions and transmit
-    time_now = datetime.now()
-    if prev_time is None or millis(prev_time, time_now) > 50:
-        prev_time = time_now
-        transmit_targets()
-        time_now = datetime.now()
-        print millis(prev_time, time_now)
+    # time_now = datetime.now()
+    # if prev_time is None or millis(prev_time, time_now) > 50:
+    #     prev_time = time_now
+    #     transmit_targets()
+    #     time_now = datetime.now()
+    #     print millis(prev_time, time_now)
 
 
 
