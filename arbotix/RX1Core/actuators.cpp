@@ -28,15 +28,6 @@ actuator_state_t *transform_actuator_state(actuator_state_t *state){
   for(int n = 1; n <= 18; n++){
     if(n % 2 == 1){
       state->position[n] = 1023 - state->position[n];
-      if(state->load[n] > 1024){
-        state->load[n] = state->load[n] - 1024;
-      } else {
-        state->load[n] = -state->load[n];
-      }
-    } else {
-      if(state->load[n] > 1024){
-        state->load[n] = 1024 - state->load[n];
-      }
     }
   }
   return state;

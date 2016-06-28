@@ -3,7 +3,7 @@
 import serial
 from OutputCache import OutputCache
 import time
-#from datetime import datetime, timedelta
+from datetime import datetime, timedelta
 
 ## Global Data
 actuator_count = 18
@@ -13,7 +13,7 @@ load = [0 for i in xrange(actuator_count + 1)]
 voltage = [0 for i in xrange(actuator_count + 1)]
 temperature = [0 for i in xrange(actuator_count + 1)]
 moving = [0 for i in xrange(actuator_count + 1)]
-ser = serial.Serial("/dev/ttyUSB0", 38400, timeout = 0) # 115200
+ser = serial.Serial("/dev/ttyUSB0", 115200, timeout = 0) # 115200
 
 ## Target positions and velocities
 goal_position = [384 for i in xrange(actuator_count + 1)]
@@ -64,7 +64,7 @@ def decode_status(data, num, ndata):
         for i in xrange(num):
             value = position[i]
             mesg = mesg + "%4d" % value + " "
-        #print mesg
+        print mesg
     else:
         print "less data than expected..."
 
@@ -102,25 +102,29 @@ def process_byte(ch):
         if counter >= data_size:
             state = 5;
     elif state == 5:
-
-        # DEBUG
-        mesg = ""
-        for i in xrange(data_size):
-            value = serial_data[i]
-            if i%27 == 0:
-                mesg += "\n"
-            if i%9 == 0:
-                mesg += " "
-            mesg = mesg + format(value, "02X") + " "
-        print mesg
-
-
         # check if checksum matches ch
         # if so, call the appropriate function to process this completed
         # message and its data
         if (checksum & 0xFF) == ch:
-            if message_id == 2:
+            if message_id == 2 or message_id == 3:
+                # DEBUG
+                # mesg = "Dbg: "
+                # for i in xrange(data_size):
+                #     value = serial_data[i]
+                #     if i % 27 == 0:
+                #         mesg += "\nDbg: "
+                #     if i % 9 == 0:
+                #         mesg += " "
+                #     mesg = mesg + format(value, "02X") + " "
+                # print mesg
                 decode_status(serial_data, num_actuators, data_size)
+            elif message_id == 0x0E:
+                mesg = ""
+                for i in xrange(data_size):
+                    mesg += chr(serial_data[i])
+                print "ArbotiX Message: " + mesg
+            else:
+                print "Other message code: " + message_id
         else:
             print checksum & 0xFF, "vs", ch
         state = 0;
@@ -146,6 +150,51 @@ def transmit_targets():
     mesg.append(check) # no checksum at this time
     ser.write(bytearray(mesg))
 
+
+#============================================================================
+#   Transmit the target position and velocity to ArbotiX-M
+#============================================================================
+def transmit_test_message():
+    global goal_position, goal_velocity, actuator_count
+
+    message = [0xFF, 0xF3, 18, 9 * 18]
+    for i in xrange(1, 19):  # loop from 1 to 18, not 0 to 17
+        #goal_position
+        value = 32 * i
+        message.append(value // 256)
+        message.append(value & 0xFF)
+        #speed
+        value = 200 * i + 315
+        message.append(value // 256)
+        message.append(value & 0xFF)
+        # load
+        value = 215 * i + 106
+        message.append(value // 256)
+        message.append(value & 0xFF)
+        # voltage
+        value = 17 + i * 10
+        message.append(value & 0xFF)
+        # temperature
+        value = 32 + 7 * i
+        message.append(value & 0xFF)
+        # movement
+        value = i % 2
+        message.append(value & 0xFF)
+
+    check = sum(message) & 0xFF
+    message.append(check)
+    ser.write(bytearray(message))
+
+    mesg = "Sent:"
+    for i in xrange(9*18):
+        value = message[4+i]
+        if i % 27 == 0:
+            mesg += "\nSent:"
+        if i % 9 == 0:
+            mesg += " "
+        mesg = mesg + format(value, "02X") + " "
+        i += 1
+    print mesg
 
 ##============================================
 # returns the elapsed milliseconds since the start of the program
@@ -173,15 +222,15 @@ while 1:
     input_byte = ser.read(1)
     if len(input_byte) > 0:
         ch = ord(input_byte)
-        # print format(ch, '#04x')
+        #print format(ch, '#04x')
         #hexcache.add(ch)
         process_byte(ch)
 
     ## periodically update the target positions and transmit
     # time_now = datetime.now()
-    # if prev_time is None or millis(prev_time, time_now) > 50:
+    # if prev_time is None or millis(prev_time, time_now) > 250:
     #     prev_time = time_now
-    #     transmit_targets()
+    #     transmit_test_message()
     #     time_now = datetime.now()
     #     print millis(prev_time, time_now)
 
