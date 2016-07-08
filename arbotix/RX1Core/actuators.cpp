@@ -121,13 +121,13 @@ actuator_state_t *query_all_registers(){
 
   actuator_state_t *state = new_actuator_state();
 
-  for(int i=0; i<SERVO_CNT; i++){
-    state->position[i] = ax12GetRegister(i+1, AX_PRESENT_POSITION_L, 2);
-    state->speed[i] = ax12GetRegister(i+1, AX_PRESENT_SPEED_L, 2);
-    state->load[i] = ax12GetRegister(i+1, AX_PRESENT_LOAD_L, 2);
-    state->voltage[i] = ax12GetRegister(i+1, AX_PRESENT_VOLTAGE, 1);
-    state->temperature[i] = ax12GetRegister(i+1, AX_PRESENT_TEMPERATURE, 1);
-    state->moving[i] = ax12GetRegister(i+1, AX_MOVING, 1);
+  for(int i=1; i<NUM_ACTUATORS + 1; i++){
+    state->position[i] = ax12GetRegister(i, AX_PRESENT_POSITION_L, 2);
+    state->speed[i] = ax12GetRegister(i, AX_PRESENT_SPEED_L, 2);
+    state->load[i] = ax12GetRegister(i, AX_PRESENT_LOAD_L, 2);
+    state->voltage[i] = ax12GetRegister(i, AX_PRESENT_VOLTAGE, 1);
+    state->temperature[i] = ax12GetRegister(i, AX_PRESENT_TEMPERATURE, 1);
+    state->moving[i] = ax12GetRegister(i, AX_MOVING, 1);
   }
   return transform_actuator_state(state);
 }
