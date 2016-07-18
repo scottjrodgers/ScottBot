@@ -368,40 +368,40 @@ fixed_t FP_Divide(fixed_t a, fixed_t b){
     sign *= -1;
   }
 
-  Serial.print("sign = "); Serial.println(sign);
+  //Serial.print("sign = "); Serial.println(sign);
 
   numerator = (uint32_t)FP_ABS(a);
   denominator = (uint32_t)FP_ABS(b);
-
+  /*
   Serial.print("n_shift = "); Serial.println(n_shift);
   Serial.print("numerator = "); Serial.println(numerator);
   Serial.print("denominator = "); Serial.println(denominator);
-
+  */
   uint32_t cond1 = (numerator & 0xC0000000) == 0;
   uint32_t cond2 = (n_shift < FP_FBITS);
-  Serial.print("cond1 = "); Serial.println(cond1);
-  Serial.print("cond2 = "); Serial.println(cond2);
+  //Serial.print("cond1 = "); Serial.println(cond1);
+  //Serial.print("cond2 = "); Serial.println(cond2);
 
   //while((numerator & 0xC0000000 == 0) && (n_shift < FP_FBITS)){
   while(cond1 && cond2){
     n_shift++;
     numerator = numerator << 1;
-    Serial.print("n_shift = "); Serial.println(n_shift);
-    Serial.print("numerator = "); Serial.println(numerator);
+    //Serial.print("n_shift = "); Serial.println(n_shift);
+    //Serial.print("numerator = "); Serial.println(numerator);
     //Serial.print("denominator = "); Serial.println(denominator);
     cond1 = (numerator & 0xC0000000) == 0;
     cond2 = (n_shift < FP_FBITS);
-    Serial.print("cond1 = "); Serial.println(cond1);
-    Serial.print("cond2 = "); Serial.println(cond2);
+    //Serial.print("cond1 = "); Serial.println(cond1);
+    //Serial.print("cond2 = "); Serial.println(cond2);
   }
 
   d_shift = FP_FBITS - n_shift;
-  Serial.print("d_shift = "); Serial.println(d_shift);
+  //Serial.print("d_shift = "); Serial.println(d_shift);
 
   if(d_shift > 0){
     denominator = denominator >> d_shift;
   }
-  Serial.print("denominator = "); Serial.println(denominator);
+  //Serial.print("denominator = "); Serial.println(denominator);
 
   quotient = numerator / denominator;
 

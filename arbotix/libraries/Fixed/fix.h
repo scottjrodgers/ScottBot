@@ -14,7 +14,7 @@ typedef int32_t fixed_t;
 #define FP_MIN          -2147450880L
 #define FP_MAX          2147450880L
 #define FP_FMASK        (((int32_t)1<<FP_FBITS) - 1)
-#define FP_ONE          ((int32_t)0x8000)
+#define FP_ONE          ((fixed_t)0x8000)
 #define FP_CONST(R)     ((fixed_t)((R)*FP_ONE + ((R) >= 0 ? 0.5 : -0.5)))
 #define FP_PI           FP_CONST(3.14159265358979323846)
 #define FP_TWO_PI       FP_CONST(2*3.14159265358979323846)
@@ -27,7 +27,7 @@ typedef int32_t fixed_t;
 //conversion Functions
 #define itok(i)         ( (fixed_t)( (int32_t)i<<(int32_t)FP_FBITS ) )
 #define ktoi(k)         ( ( (int16_t)( (int32_t)k>>(int32_t)FP_FBITS ) )&0x0000ffff )
-#define ftok(f)         ( (fixed_t)(float)( (f)*(32768) ) )
+#define ftok(f)         ( (fixed_t)(((float)f)*(32768)) )
 #define ktof(k)         ( (float) k / 32768.0 )
 
 //extern float FP_FixedToFloat(fixed_t);

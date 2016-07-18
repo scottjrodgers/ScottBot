@@ -1,7 +1,7 @@
 #include "fix.h"
 
 void setup(void) {
-  volatile int32_t fix1, fix2, fix3;
+  volatile fixed_t fix1, fix2, fix3, fix4, fix5;
   volatile float float1 = 2.33f;
   char s[12];
 
@@ -12,6 +12,9 @@ void setup(void) {
   fix1 = ftok(0.66);
   fix2 = ftok(float1);
   fix3 = fix1 + fix2;
+  fix4 = ftok(2.0);
+  fix5 = ftok(3.0);
+  
   FP_FixedToString(fix3, s);
   Serial.print("0.66 + 2.33 = "); Serial.println(s);
 
@@ -32,6 +35,11 @@ void setup(void) {
 
   //2.33/0.66
   fix3 = FP_Divide(fix1, fix2);
+  FP_FixedToString(fix3, s);
+  Serial.print("0.66 / 2.33 = "); Serial.println(s);
+
+  //2.0 * 3.0
+  fix3 = FP_Multiply(fix4, fix5);
   FP_FixedToString(fix3, s);
   Serial.print("0.66 / 2.33 = "); Serial.println(s);
 
