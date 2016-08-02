@@ -3,9 +3,25 @@
 
 // Core data structures for RX1 API
 #include "robot.h"
-#include "fixedmath.h"
 
 typedef enum{SUCCESS=1000, FAILURE=-65535} RC_t;
+
+// Declare vector
+typedef struct{
+  fixed_t x;
+  fixed_t y;
+  fixed_t z;
+} vector_t;
+
+// Declare vector
+typedef struct{
+  fixed_t x;
+  fixed_t y;
+  fixed_t z;
+  fixed_t dx;
+  fixed_t dy;
+  fixed_t dz;
+} k_vector_t;
 
 // Actuator State
 typedef struct{

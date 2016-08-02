@@ -1,6 +1,7 @@
 // RX1 Api functions
 
 #include <Arduino.h>
+#include <fix.h>
 #include "robot.h"
 #include "rx1_api.h"
 #include "data_structures.h"

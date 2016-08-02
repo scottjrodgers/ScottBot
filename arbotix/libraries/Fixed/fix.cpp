@@ -43,6 +43,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "fix.h"
+#include "sine_data.h"
+#include "arcsine_data.h"
 #include "Arduino.h"
 
 #define MAX_STRING_SIZE 8
@@ -217,23 +219,6 @@ void FP_FixedToString(fixed_t f, char *s) {
   _concat(s, sf);
 }
 
-/*
-int32_t __attribute__((naked)) FP_Multiply(int32_t a, int32_t b) {
-  asm volatile (
-    //move passed values into correct regs
-    "movw r16, r18 \n"
-    "movw r18, r20 \n"
-    "movw r20, r22 \n"
-    "movw r22, r24 \n"
-    "call __mulsa3 \n"
-    //move results into return regs
-    "movw r22, r24 \n"
-    "movw r24, r26 \n"
-    "ret           \n"
-  );
-}
-*/
-
 fixed_t FP_Multiply(fixed_t a, fixed_t b){
   uint32_t abs_a, ah, al;
   uint32_t abs_b, bh, bl;
@@ -317,43 +302,6 @@ fixed_t FP_Multiply(fixed_t a, fixed_t b){
   return prod;
 }
 
-/*
-int32_t __attribute__((naked)) FP_Divide(int32_t a, int32_t b) {
-  asm volatile (
-    //move passed values into correct regs
-    "movw r26, r24 \n"
-    "movw r24, r22 \n"
-    "call __divsa3 \n"
-    "ret           \n"
-  );
-}
-*/
-
-// fixed_t FP_Inv(fixed_t a){
-//   fixed_t inv = 0;
-//   fixed_t up, down;
-//   fixed_t a2 = FP_ABS(a);
-//   fixed_t bit_up, bit_down, flipped_up, flipped_down;
-//
-//   inv = a2 & FP_ONE;
-//   for(int i = 1; i<15; i++){
-//     up = FP_ONE << i;
-//     down = FP_ONE >> i;
-//
-//     bit_up = a2 & up;
-//     bit_down = a2 & down;
-//
-//     flipped_up = bit_up >> (2*i);
-//     flipped_down = bit_down << (2*i);
-//
-//     inv += flipped_up;
-//     inv += flipped_down;
-//   }
-//   if(a < 0){
-//     return -inv;
-//   }
-//   return inv;
-// }
 
 fixed_t FP_Divide(fixed_t a, fixed_t b){
   int n_shift = 0;
@@ -420,79 +368,6 @@ int32_t FP_Round(int32_t f, uint8_t n) {
     return (f&(0xFFFFFFFF<<n)) - ((f&(1<<(n - 1)))<<1);
 }
 
-/*
-int32_t __attribute__((naked)) FP_FloatToFixed(float f) {
-  asm volatile (
-    //__fractsfsa
-    "subi  r24, 0x80    \n"
-    "sbci  r25, 0xf8    \n"
-    "call __fixunssfsi \n"
-    "set                \n"
-    "cpse  r27, r1      \n"
-    "rjmp  __fp_zero    \n"
-    "ret                \n"
-  );
-}
-
-float __attribute__((naked)) FP_FixedToFloat(int32_t k) {
-  asm volatile (
-    //__fractsasf
-    "call __floatsisf \n"
-    "tst   r25         \n"
-    "breq  1f          \n"
-    "subi  r24, 0x80   \n"
-    "sbci  r25, 0x07   \n"
-    "1:                \n"
-    "ret               \n"
-  );
-}
-
-int32_t FP_Sin(int32_t fp) {
-  int16_t sign = 1;
-  int32_t sqr, result;
-  const int32_t SK[2] = {
-    FP_CONST(7.61e-03),
-    FP_CONST(1.6605e-01)
-  };
-
-  //normalize
-  fp %= 2*FP_PI;
-  if (fp < 0)
-    fp = FP_TWO_PI + fp;
-    //fp = FP_PI*2 + fp;
-  if ((fp > FP_HALF_PI) && (fp <= FP_PI))
-    fp = FP_PI - fp;
-  else if ((fp > FP_PI) && (fp <= (FP_PI + FP_HALF_PI))) {
-    fp = fp - FP_PI;
-    sign = -1;
-  } else if (fp > (FP_PI + FP_HALF_PI)) {
-    fp = (FP_PI<<1) - fp;
-    sign = -1;
-  }
-
-  //calculate sine
-  // sqr = FP_Multiply(fp, fp);
-  // result = FP_Multiply(SK[0], sqr);
-  // result = FP_Multiply((result - SK[1]), sqr);
-  // result = FP_Multiply((result + FP_ONE), fp);
-  //
-  // //taylor series
-  // // sin(x) = x − (x^3)/3! + (x^5)/5! − (x^7)/7! + ...
-  // sqr = FP_Multiply(fp, fp);
-  // fp = FP_Multiply(fp, sqr);
-  // result -= FP_Divide(fp, itok(6));
-  // fp = FP_Multiply(fp, sqr);
-  // result += FP_Divide(fp, itok(120));
-  // fp = FP_Multiply(fp, sqr);
-  // result -= FP_Divide(fp, itok(5040));
-  // fp = FP_Multiply(fp, sqr);
-  // result += FP_Divide(fp, itok(362880));
-  // fp = FP_Multiply(fp, sqr);
-  // result -= FP_Divide(fp, itok(39916800));
-
-  return (sign*result);
-}
-*/
 
 fixed_t _FP_SquareRoot(fixed_t val, int32_t Q) {
   fixed_t sval = 0;
@@ -520,4 +395,80 @@ fixed_t _FP_SquareRoot(fixed_t val, int32_t Q) {
     return(sval<<(15 - Q));
   else
     return(sval>>(Q - 15));
+}
+
+/*****************************************************************************
+* lookup a trig value from pre-calculated header files
+*****************************************************************************/
+fixed_t trig_lookup(float x, const int N, const float cutoffs[],
+                    const int counts[], const fixed_t* values[]){
+  float cmin = 0.0;
+  float cmax = 0.0;
+  int segment = 0;
+  int count;
+  float index;
+  int idx_1, idx_2;
+  fixed_t value_1, value_2;
+  fixed_t result = (fixed_t)0;
+
+  while(x > cutoffs[segment] && segment < N){
+    cmin = cutoffs[segment];
+    segment += 1;
+  }
+  if(segment < N){
+    cmax = cutoffs[segment];
+    count = counts[segment];
+    index = count * (x - cmin) / (cmax - cmin);
+    idx_1 = (int)floor(index);
+    idx_2 = (int)ceil(index);
+    value_1 = values[segment][idx_1];
+    value_2 = values[segment][idx_2];
+
+    result = (fixed_t)round(value_1 + (value_2 - value_1) * (index - idx_1));
+  }
+  return result;
+}
+
+
+/*****************************************************************************
+* Computes the sine of a fixed point value (in degrees)
+*****************************************************************************/
+fixed_t FP_Sin(fixed_t src_angle){
+  float f_angle = ktof((float)src_angle);
+  float angle;
+  float sign;
+  fixed_t result;
+
+  f_angle = f_angle - 360 * floor(f_angle / 360.0);
+
+  if(f_angle < 0.0 || f_angle > 360.0){
+    // error condition
+    Serial.print("Error! Sine Angle should be between 0 and 360 but was:");
+    Serial.println(f_angle);
+  }
+
+  if(f_angle < 90.0){
+    angle = f_angle;
+    sign = 1.0;
+  }
+  else if(f_angle < 180.0){
+    angle = 180.0 - f_angle;
+    sign = 1.0;
+  }
+  else if(f_angle < 270.0){
+    angle = f_angle - 180.0;
+    sign = -1.0;
+  }
+  else if(f_angle < 360.0){
+    angle = 360.0 - f_angle;
+    sign = -1.0;
+  }
+  else{
+    angle = 0.0;
+    sign = 0.0;
+  }
+
+  result = sign * trig_lookup(angle, sine_N, sine_cutoffs,
+                              sine_counts, sine_values);
+  return result;
 }

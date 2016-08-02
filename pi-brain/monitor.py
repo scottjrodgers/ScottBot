@@ -108,15 +108,16 @@ def process_byte(ch):
         if (checksum & 0xFF) == ch:
             if message_id == 2 or message_id == 3:
                 # DEBUG
-                # mesg = "Dbg: "
-                # for i in xrange(data_size):
-                #     value = serial_data[i]
-                #     if i % 27 == 0:
-                #         mesg += "\nDbg: "
-                #     if i % 9 == 0:
-                #         mesg += " "
-                #     mesg = mesg + format(value, "02X") + " "
-                # print mesg
+                if 1:
+                    mesg = "Dbg: "
+                    for i in xrange(data_size):
+                        value = serial_data[i]
+                        if i % 27 == 0:
+                            mesg += "\nDbg: "
+                        if i % 9 == 0:
+                            mesg += " "
+                        mesg = mesg + format(value, "02X") + " "
+                    print mesg
                 decode_status(serial_data, num_actuators, data_size)
             elif message_id == 0x0E:
                 mesg = ""
