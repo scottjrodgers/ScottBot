@@ -50,7 +50,7 @@ extern fixed_t _FP_SquareRoot(fixed_t, fixed_t);
 
 //trig
 extern fixed_t FP_Sin(fixed_t);
-#define FP_Cos(A)       (FP_Sin(A - 90 * FP_ONE))
+#define FP_Cos(A)       (FP_Sin(A + 90 * FP_ONE))
 #define FP_Tan(A)       (FP_Division(FP_Sin(A), FP_Cos(A)))
 
 #endif //FIX_H

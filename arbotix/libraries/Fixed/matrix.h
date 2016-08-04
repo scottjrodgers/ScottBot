@@ -10,7 +10,6 @@
 #define MATRIX_H
 
 #include "Arduino.h"
-#include "fix.h"
 
 class matrix
 {
@@ -56,6 +55,16 @@ class matrix
     unsigned ncols() const;
 
     void print();
+
+    void make_rot_X(fixed_t angle);
+    void make_rot_Y(fixed_t angle);
+    void make_rot_Z(fixed_t angle);
+
+    void make_translate(fixed_t x, fixed_t y, fixed_t z);
+    void add_translation(fixed_t x, fixed_t y, fixed_t z);
+
+    void make_translate(const matrix& rhs);
+    void add_translation(const matrix& rhs);
 };
 
 #endif //FIX_H

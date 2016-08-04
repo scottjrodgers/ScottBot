@@ -11,7 +11,9 @@
  * Maximilan Rosenblattl, Andreas Wolf 2007-02-07
  * Copyright (c) 2010-2012 Ivan Voras <ivoras@freebsd.org>
  * Copyright (c) 2012 Tim Hartrick <tim@edgecast.com>
+
  * Modified to work on ArbotiX-M robocontroller by Scott J. Rodgers, (c) 2016
+ * Some of the implementations mentioned above replaced by my custom code
 
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions are met:

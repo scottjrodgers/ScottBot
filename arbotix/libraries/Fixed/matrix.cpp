@@ -4,9 +4,10 @@ Simple matrix math class
 
 */
 
-#include "matrix.h"
-#include "fix.h"
 #include "Arduino.h"
+#include "fix.h"
+#include "vector.h"
+#include "matrix.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -128,7 +129,7 @@ matrix matrix::operator*(const matrix& rhs){
     Serial.println("Error Matrix Mult ncols(A) != nrows(B)");
     return result;
   }
-  
+
   char str[16];
   /*
   Serial.println(R);
@@ -142,7 +143,7 @@ matrix matrix::operator*(const matrix& rhs){
         fixed_t left_val = data[idx(i,k)];
         fixed_t right_val = rhs(k,j);
         fixed_t product = FP_Multiply(left_val, right_val);
-        
+
         result.set(i,j, result(i,j) + product);
         /*
         Serial.print("(");
@@ -153,14 +154,14 @@ matrix matrix::operator*(const matrix& rhs){
         Serial.print(k);
         Serial.print(") += ");
         format(left_val, str);
-        Serial.print(str);       
+        Serial.print(str);
         Serial.print(" * ");
         format(right_val, str);
         Serial.print(str);
         Serial.print(" (");
         format(product, str);
         Serial.print(str);
-        Serial.print(") ");        
+        Serial.print(") ");
         Serial.print(" -> ");
         format(result.data[idx(i,j)], str);
         Serial.println(str);
@@ -235,8 +236,9 @@ void matrix::format(fixed_t num, char *str){
     negative = '-';
     num = FP_ABS(num);
   }
-  int whole = (num / FP_ONE);
-  int frac = (int)(((100 * FP_FRAC_PART(FP_ABS(num))) + 16384) / FP_ONE);
+  int temp = (int)(((100 * num) + 16384) / FP_ONE);
+  int whole = (temp / 100);
+  int frac = temp % 100;
   sprintf(str, " %c%1d.%02d", negative, whole, frac);
 }
 
