@@ -83,6 +83,9 @@ vector vector::operator*(const vector& rhs){
   fixed_t b1 = rhs.data[0];
   fixed_t b2 = rhs.data[1];
   fixed_t b3 = rhs.data[2];
+  result.set(0, FP_Multiply(a2, b3) - FP_Multiply(a3, b2));
+  result.set(1, FP_Multiply(a3, b1) - FP_Multiply(a1, b3));
+  result.set(2, FP_Multiply(a1, b2) - FP_Multiply(a2, b1));
   return result;
 }
 
@@ -119,6 +122,21 @@ vector vector::operator*(const int rhs){
   return result;
 }
 
+vector vector::norm(){
+  char s[10];
+  vector result;
+  fixed_t accum = (fixed_t)0;
+  for(int i=0;i<3;i++){
+    accum += FP_Multiply(data[i],data[i]);
+  }
+  FP_FixedToString(accum, s);  Serial.println(s);
+  accum = FP_Sqrt(accum);
+  FP_FixedToString(accum, s);  Serial.println(s);
+  for(int i=0;i<3;i++){
+    result.data[i] = FP_Divide(data[i], accum);
+  }
+  return result;
+}
 
 // scalar division
 vector vector::operator/(const fixed_t rhs){
@@ -152,7 +170,6 @@ vector vector::operator/(const int rhs){
   }
   return result;
 }
-
 
 fixed_t vector::operator()(const unsigned& element){
   return this->data[element];

@@ -1,4 +1,5 @@
 #include "fix.h"
+#include "vector.h"
 #include "matrix.h"
 #include "Arduino.h"
 
@@ -11,6 +12,8 @@ void setup(void) {
   matrix V(3,1);
   matrix D(2,2);
   matrix E(2,2);
+  matrix R;
+  vector Z(ftok(1),ftok(2),ftok(3));
 
   Serial.begin(9600);
   delay(1000);
@@ -55,7 +58,7 @@ void setup(void) {
   V.set(0,0, 2.0);
   V.set(1,0, 3.0);
   V.set(2,0, 4.0);
-  
+
   for(int i=0;i<2;i++){
     for(int j=0;j<2;j++){
       D.set(i,j, 2.0);
@@ -184,7 +187,36 @@ void setup(void) {
   Serial.println(C.nrows());
   Serial.println("ncols(C)");
   Serial.println(C.ncols());
-/* */
+
+  Serial.println("------------------------------------------------------------\n");
+  R.set(0,0, ftok(0));
+  R.set(0,1, ftok(1));
+  R.set(0,2, ftok(0));
+  R.set(0,3, ftok(0));
+  R.set(1,0, ftok(1));
+  R.set(1,1, ftok(0));
+  R.set(1,2, ftok(0));
+  R.set(1,3, ftok(0));
+  R.set(2,0, ftok(0));
+  R.set(2,1, ftok(0));
+  R.set(2,2, ftok(1));
+  R.set(2,3, ftok(1));
+  R.set(3,0, ftok(0));
+  R.set(3,1, ftok(0));
+  R.set(3,2, ftok(0));
+  R.set(3,3, ftok(1));
+
+  Serial.println("R:");
+  R.print();
+  Serial.println("Z:");
+  Z.print();
+
+  Serial.println("R * Z:");
+  vector out = R * Z;
+  out.print();
+
+  Serial.println("------------------------------------------------------------\n");
+
 }
 
 void loop(void) { }

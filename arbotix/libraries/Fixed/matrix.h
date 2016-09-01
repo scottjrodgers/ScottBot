@@ -37,6 +37,8 @@ class matrix
 
     matrix operator*(const matrix& rhs);
 
+    vector operator*(const vector& rhs);
+
     matrix operator*(const fixed_t rhs);
     matrix operator*(const float rhs);
     matrix operator*(const double rhs);

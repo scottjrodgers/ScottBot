@@ -44,6 +44,7 @@ class vector
     vector operator/(const double rhs);
     vector operator/(const int rhs);
 
+    vector norm();
 
     fixed_t operator()(const unsigned& element);
     const fixed_t operator()(const unsigned& element) const;

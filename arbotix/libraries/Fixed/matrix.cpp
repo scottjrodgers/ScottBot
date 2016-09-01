@@ -172,6 +172,28 @@ matrix matrix::operator*(const matrix& rhs){
   return result;
 }
 
+vector matrix::operator*(const vector& rhs){
+  vector result;
+  matrix mat_tmp(4,1);
+  matrix mat_result(4,1);
+
+  mat_tmp.set(0,0, rhs(0));
+  mat_tmp.set(1,0, rhs(1));
+  mat_tmp.set(2,0, rhs(2));
+  mat_tmp.set(3,0, FP_ONE);
+  //mat_tmp.print();
+
+  mat_result = *this * mat_tmp;
+  //mat_result.print();
+
+  result.set(0, mat_result(0,0));
+  result.set(1, mat_result(1,0));
+  result.set(2, mat_result(2,0));
+  //result.print();
+
+  return result;
+}
+
 // scalar multiplication
 matrix matrix::operator*(const fixed_t rhs){
   matrix result(R,C);

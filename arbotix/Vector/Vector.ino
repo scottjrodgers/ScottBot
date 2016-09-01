@@ -8,6 +8,8 @@ void setup(void) {
   vector A(ftok(1.1), ftok(2.2), ftok(3.3));
   vector B(ftok(-2.0), ftok(0), ftok(1.7));
   vector C(FP_ONE, FP_ONE * 2, 0);
+  vector D(ftok(1.0),ftok(-1.0),ftok(0.0));
+  vector E(ftok(2.0),ftok(1.0),ftok(0.0));
 
   Serial.begin(9600);
   delay(1000);
@@ -20,6 +22,12 @@ void setup(void) {
 
   Serial.println("vector C:");
   C.print();
+
+  Serial.println("vector D:");
+  D.print();
+
+  Serial.println("vector E:");
+  E.print();
 
   Serial.println("------------------------------------------------------------\n");
 
@@ -72,10 +80,21 @@ void setup(void) {
   Ans.print();
 
   Serial.println("------------------------------------------------------------\n");
+  
+  Serial.println('Vector normalization:');
+  Serial.println("D = D.norm()");
+  D = D.norm();
+  D.print();
+  
+  Serial.println("E = E.norm()");
+  E = E.norm();
+  E.print();  
 
-  Serial.println("Cross Product : Ans = A * B");
-  // Ans = D * E;
-  // Ans.print();
+  Serial.println("------------------------------------------------------------\n");
+
+  Serial.println("Cross Product : Ans = D * E");
+  Ans = D * E;
+  Ans.print();
 
   Serial.println("------------------------------------------------------------\n");
 
@@ -85,6 +104,7 @@ void setup(void) {
   Serial.println(A(1));
   Serial.println("Get element A(2)");
   Serial.println(A(2));
+
 }
 
 void loop(void) { }
