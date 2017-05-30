@@ -8,7 +8,7 @@
   </material>
 
   <material name="lightgray">
-    <color rgba="0.6 0.6 0.6 1"/>
+    <color rgba="0.7 0.7 0.7 1"/>
   </material>
 
   <material name="red">
@@ -24,7 +24,6 @@
   </material>
 
 
-
   <!-- Macros -->
   
   <xacro:macro name="default_inertial" params="mass">
@@ -35,6 +34,7 @@
 	       izz="1.0" />
     </inertial>
   </xacro:macro>
+
 
   <!-- Links -->
   
@@ -142,9 +142,38 @@
     </visual>
   </link>
 
+  <link name="neck_yaw">
+    <visual>
+      <geometry>
+	<box size="0.020 0.040 0.050"/>
+      </geometry>
+      <material name="darkgray"/>
+      <origin xyz="0 0 0.030"/>
+    </visual>
+  </link>
+
+  <link name="neck_pitch">
+    <visual>
+      <geometry>
+	<box size="0.020 0.040 0.050"/>
+      </geometry>
+      <material name="darkgray"/>
+      <origin xyz="0 0 0.020"/>
+    </visual>
+  </link>
+
+  <link name="camera_link">
+    <visual>
+      <geometry>
+	<box size="0.040 0.180 0.025"/>
+      </geometry>
+      <material name="darkgray"/>
+    </visual>
+  </link>
+  
   
   <!-- Joints -->
-
+  
   <joint name="leftwing_joint" type="fixed">
     <parent link="base_link"/>
     <child link="left_plate"/>
@@ -190,4 +219,26 @@
     <axis xyz="0 0 1"/>
   </joint>
   
+  <joint name="neck_yaw_j" type="revolute">
+    <parent link="base_link"/>
+    <child link="neck_yaw"/>
+    <origin xyz="0.0 0.0 0.01" rpy="0 0 0"/>
+    <limit effort="30" velocity="1" lower="-1.75" upper="1.75"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <joint name="neck_pitch_j" type="revolute">
+    <parent link="neck_yaw"/>
+    <child link="neck_pitch"/>
+    <origin xyz="0.0 0.0 0.065" rpy="0 0 0"/>
+    <limit effort="30" velocity="1" lower="-0.5" upper="0.8"/>
+    <axis xyz="0 1 0"/>
+  </joint>
+
+  <joint name="camera_pitch" type="fixed">
+    <parent link="neck_pitch"/>
+    <child link="camera_link"/>
+    <origin xyz="0.0 0.0 0.0704" rpy="0 0 0"/>
+  </joint>    
+
 </robot>
