@@ -1,4 +1,4 @@
-# ScottBot
-Code repository for my RX-1 robot project
+# ScottBot 2.0
+Code repository for my ScottBot 2.0 robot project
 
-Based on the Trossen Robotics Hexapod.  The control is implemented on the ArbotiX-M robocontroller and the Raspberry PI.
+A differential-drive robot, 3d-printed with an Xtion Pro for RGB-D vision.
