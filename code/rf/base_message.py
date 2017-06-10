@@ -19,7 +19,7 @@ class BaseMessage:
         """
         Encodes the message contents to a byte array, then encodes with Base64 to a string.
 
-        This function must be implemented in each derived class
+        This function must be implemented in each derived class.  Use struct
 
         :return: a Base64-encoded string
         """
