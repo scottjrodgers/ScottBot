@@ -19,30 +19,45 @@ def init_parameters():
     cur.execute("CREATE TABLE integers(key VARCHAR(64) PRIMARY KEY, value INT);")
     cur.execute("CREATE TABLE floats(key VARCHAR(64) PRIMARY KEY, value DOUBLE);")
     cur.execute("CREATE TABLE strings(key VARCHAR(64) PRIMARY KEY, value VARCHAR(256));")
-    cur.execute("INSERT INTO integers(key, value) VALUES (?,?);", ["__MAX_TOPIC", 100])
+    cur.execute("INSERT INTO integers(key, value) VALUES (?,?);", ["__MAX_PORT", 5556])
 
     con.commit()
     con.close()
 
 
-def get_topic_id(topic):
+def get_new_port(topic):
     topic_id = 0
 
     con = db.connect('parameters.db')
     cur = con.cursor()
 
-    cur.execute("SELECT value FROM topics WHERE key = ?;", [topic])
+    cur.execute("SELECT value FROM integers WHERE key = '__MAX_PORT';")
+    values = cur.fetchall()
+    topic_id = values[0][0] + 1
+    cur.execute("INSERT INTO topics(key, value) VALUES(?,?)",[topic, topic_id])
+    cur.execute("UPDATE integers SET value = ? WHERE key = '__MAX_PORT';", [topic_id])
+
+    con.commit()
+
+    return topic_id
+
+def get_port(topic):
+    topic_id = 0
+
+    con = db.connect('parameters.db')
+    cur = con.cursor()
+
+    try:
+        cur.execute("SELECT value FROM topics WHERE key = ?;", [topic])
+    except db.OperationalError:
+        init_parameters()
+        cur.execute("SELECT value FROM topics WHERE key = ?;", [topic])
+
     values = cur.fetchall()
     if len(values) > 0:
         topic_id = values[0][0]
     else:
-        cur.execute("SELECT value FROM integers WHERE key = '__MAX_TOPIC';")
-        values = cur.fetchall()
-        topic_id = values[0][0] + 1
-        cur.execute("INSERT INTO topics(key, value) VALUES(?,?)",[topic, topic_id])
-        cur.execute("UPDATE integers SET value = ? WHERE key = '__MAX_TOPIC';", [topic_id])
-
-    con.commit()
+        topic_id = get_new_port(topic)
 
     return topic_id
 
@@ -125,9 +140,9 @@ if __name__ == '__main__':
     init_parameters()
 
     ## Topics:
-    topicid1 = get_topic_id("Test_Topic")
-    topicid2 = get_topic_id("Test_Topic")
-    topicid3 = get_topic_id("Other_Topic")
+    topicid1 = get_port("Test_Topic")
+    topicid2 = get_port("Test_Topic")
+    topicid3 = get_port("Other_Topic")
 
     assert topicid1 > 0
     assert topicid1 == topicid2

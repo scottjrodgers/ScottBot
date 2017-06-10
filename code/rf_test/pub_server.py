@@ -1,19 +1,21 @@
-import random
-import time
-from rf.float_message import FloatMessage
-from rf.publisher import Publisher
-import parameters
+"""
+Test a publisher node
+"""
 
-parameters.init_parameters()
+from rf.node import Node
 
-pub = Publisher("test-float")
+class PubNode(Node):
+    def initialize(self):
+        self.value = 1
+        self.pub = self.create_publisher("integer-test")
+        self.rate = 1.0
 
-while True:
-    messagedata = random.randrange(1,215)-80
-    msg = FloatMessage()
-    msg.value = float(messagedata)
-    print(msg.value)
-    pub.send(msg)
+    def mainloop(self):
+        msg = dict(value = self.value)
+        self.publish_message(self.pub, msg)
+        print("value: %d" % self.value)
+        self.value += 1
 
-    time.sleep(1)
-    
+# Start node
+nd = PubNode()
+nd.run()

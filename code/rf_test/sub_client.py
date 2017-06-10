@@ -1,19 +1,29 @@
 """
-Test subscription client
+Test a subscriber node
 """
-from rf.subscriber import Subscriber
-from rf.float_message import FloatMessage
-import time
+import numpy as np
+from rf.node import Node
 
-def float_callback(msg):
-    val = msg.value
-    print("recieved %f", val)
+class SubNode(Node):
+    def int_callback(self, msg):
+        value = msg['value']
+        print("received-int: %d" % value)
 
-sub = Subscriber("test-float", FloatMessage(), float_callback)
+    def np_callback(self, msg):
+        value = msg['value']
+        print("received-msg: %s" % str(value))
 
-while 1:
-    sub.check()
-    print(".")
-    time.sleep(0.2)
+    def initialize(self):
+        self.create_subscriber("integer-test",  self.int_callback)
+        self.create_subscriber("np-test",  self.np_callback)
+        self.rate = 5.0
+        self.poll_rate = 100.0
 
+
+    def mainloop(self):
+        print("...")
+
+# Start node
+nd = SubNode()
+nd.run()
 
