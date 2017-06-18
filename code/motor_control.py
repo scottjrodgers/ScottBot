@@ -2,11 +2,11 @@
 Motor Control and Differential Drive Node
 """
 
-import numpy as np
 import dynamixel_functions as dyn
 import time
 from math import pi as PI, floor, fabs, sin, cos
 from rf.node import Node
+
 
 class MotorControl(Node):
 
@@ -54,8 +54,8 @@ class MotorControl(Node):
         dyn.packetHandler()
 
         ## 3) Read curren wheel positions
-        wheel_left_pos = dyn.get_position(self.port_num, self.wheel_left_ID)
-        wheel_right_pos = dyn.get_position(self.port_num, self.wheel_right_ID)
+        self.wheel_left_pos = dyn.get_position(self.port_num, self.wheel_left_ID)
+        self.wheel_right_pos = dyn.get_position(self.port_num, self.wheel_right_ID)
 
         ## 4) Reset Pan / Tilt to center
         dyn.set_target_position(self.port_num, self.pan_servo_ID, self.SERVO_CENTER)
@@ -65,6 +65,7 @@ class MotorControl(Node):
         # Initialize subscribers
         #----------------------------
         self.create_subscriber("cmd-vel",  self.twist_callback)
+        self.odom_pub = self.create_publisher('odometry.msg')
 
 
 
@@ -92,10 +93,9 @@ class MotorControl(Node):
 
     # Get the delta
     def get_wheel_movement_deltas(self):
-        global wheel_left_pos, wheel_right_pos
 
-        prev_left_pos = wheel_left_pos
-        prev_right_pos = wheel_right_pos
+        prev_left_pos = self.wheel_left_pos
+        prev_right_pos = self.wheel_right_pos
 
         wheel_left_pos = dyn.get_position(self.port_num, self.wheel_left_ID)
         wheel_right_pos = -dyn.get_position(self.port_num, self.wheel_right_ID)  # Assume right motor is reversed
@@ -129,9 +129,11 @@ class MotorControl(Node):
     def stop(self):
         self.stop_wheels()
         dyn.set_target_velocity(self.port_num, self.pan_servo_ID, 0)
-        dyn.set_target_position(self.port_num, self.pan_servo_ID, dyn.get_position(self.pan_servo_ID))
+        dyn.set_target_position(self.port_num, self.pan_servo_ID,
+                                dyn.get_position(self.port_num, self.pan_servo_ID))
         dyn.set_target_velocity(self.port_num, self.tilt_servo_ID, 0)
-        dyn.set_target_position(self.port_num, self.tilt_servo_ID, dyn.get_position(self.tilt_servo_ID))
+        dyn.set_target_position(self.port_num, self.tilt_servo_ID,
+                                dyn.get_position(self.port_num, self.tilt_servo_ID))
         return 0
 
 
@@ -152,13 +154,15 @@ class MotorControl(Node):
     #  Estimate the new position and orientation
     #=====================================================================
     def compute_odometry(self):
-        # globals
-        global x_pos, y_pos, theta, prev_time
+
+        x_pos = self.x_pos
+        y_pos = self.y_pos
+        theta = self.theta
 
         # get timestamp compute delta time and store new timestamp
         curr_time = time.time()
-        delta_time = curr_time - prev_time
-        prev_time = curr_time()
+        delta_time = curr_time - self.prev_time
+        self.prev_time = curr_time()
 
         # poll linear motion of wheels
         delta_left, delta_right = self.get_wheel_movement_deltas()
@@ -170,17 +174,17 @@ class MotorControl(Node):
         # integrate over 10 steps
         N = 10
         for i in range(N):
-            x_pos += (fwd_delta / N) * cos(theta)
-            y_pos += (fwd_delta / N) * sin(theta)
+            x_pos += (fwd_delta / N) * cos(self.theta)
+            y_pos += (fwd_delta / N) * sin(self.theta)
             theta += angular_delta / N
 
         # Compute velocities
         ang_vel = angular_delta / delta_time
         fwd_vel = fwd_delta / delta_time
-        vx = fwd_vel * cos(theta)
-        vy = fwd_vel * sin(theta)
+        vx = fwd_vel * cos(self.theta)
+        vy = fwd_vel * sin(self.theta)
 
-        # Return all odometry values
+        # Return all odometry.msg values
         return x_pos, y_pos, theta, vx, vy, ang_vel
 
 
@@ -188,7 +192,7 @@ class MotorControl(Node):
     # cmd_vel callback function
     #=====================================================================
     def twist_callback(self, cmd_vel):
-        fwd_vel = cmd_vel['x']
+        fwd_vel = cmd_vel['vx']
         ang_vel = cmd_vel['rz']
 
         self.apply_twist(fwd_vel, ang_vel)
@@ -198,6 +202,14 @@ class MotorControl(Node):
     # Main loop
     #=====================================================================
     def mainloop(self):
+        # Get relevant odometry.msg
+        x, y, th, vx, vy, vth = self.compute_odometry()
+        odom = dict(pose=dict(x=x, y=y, z= 0, theta=th),
+                    twist=dict(vx=vx, vy=vy, vz=0, rx=0, ry=0, rz=vth))
+
+        self.publish_message(self.odom_pub, odom)
+
+
         print("..")
 
 
@@ -226,16 +238,14 @@ if __name__ == '__main__':
     # rospy.Subscriber("cmd_vel", Twist, callback)
     #
     # # Subscribe to the /pan topic
-    # # TODO: pan topic
     #
     # # Subscribe to the /tilt topic
-    # # TODO: tilt topic
     #
     #
     # # main loop
     # r = rospy.Rate(rate)
     # while not rospy.is_shutdown():
-    #     # Get relevant odometry
+    #     # Get relevant odometry.msg
     #     x, y, th, vx, vy, vth = compute_odometry()
     #
     #     # build quaternion

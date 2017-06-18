@@ -15,7 +15,7 @@ import time
 from parameters import get_port, get_new_port
 
 class Node:
-    def __init__(self):
+    def __init__(self, args=list()):
         # base URL for zmq communications
         self.__base_url = 'tcp://127.0.0.1'
 
@@ -50,6 +50,8 @@ class Node:
 
         # last update time
         self.__last_update_time = time.time()
+
+        self.args = args
 
         # done flag
         self.done = False
