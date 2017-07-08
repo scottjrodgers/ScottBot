@@ -12,7 +12,7 @@ TODOs:
 import zmq
 import random as rnd
 import time
-from parameters import get_port, get_new_port
+from rf.parameters import get_port, get_new_port
 
 class Node:
     def __init__(self, args=list()):
@@ -67,7 +67,7 @@ class Node:
             s = ctx.socket(zmq.PUB)
             bind_to = self.__base_url + ":" + str(port)
             s.bind(bind_to)
-            print("publish to: %s", bind_to)
+            print("publish to: %s" % bind_to)
             ## TODO: How to check for actual success?
             success = True
             if success:
@@ -90,7 +90,7 @@ class Node:
             s = ctx.socket(zmq.SUB)
             bind_to = self.__base_url + ":" + str(port)
             s.connect(bind_to)
-            print("subscribe to: %s", bind_to)
+            print("subscribe to: %s" % bind_to)
             s.setsockopt_string(zmq.SUBSCRIBE, '')
             ## TODO: How to check for actual success?
             success = True
@@ -162,6 +162,7 @@ class Node:
 
 
     def publish_message(self, topicname, message):
+        # TODO: is it really the topicname or topic_ID?
         if topicname not in self.__pub_refresh_count:
             self.__pub_refresh_count[topicname] = rnd.randint(0,self.__pub_refresh)
         self.__pub_refresh_count[topicname] += 1
